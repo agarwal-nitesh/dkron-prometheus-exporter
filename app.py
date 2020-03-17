@@ -2,9 +2,9 @@ import time
 from prometheus_client import start_http_server
 from prometheus_client.core import GaugeMetricFamily, REGISTRY, CounterMetricFamily, StateSetMetricFamily, InfoMetricFamily
 from util.http_client import http_get_request
-import sys
 import dateutil.parser
 import argparse
+import datetime
 
 
 class DkronMetricsController(object):
@@ -22,6 +22,7 @@ class DkronMetricsController(object):
         yield self.get_next_exec_time_metrics(result)
         yield self.get_status_metrics(result)
         yield self.get_info_metrics(result)
+        yield self.get_schedule_status_metrics(result)
 
     def get_info_metrics(self, result):
         metric = InfoMetricFamily(
@@ -52,6 +53,25 @@ class DkronMetricsController(object):
             if status_txt == 'failed':
                 status = False
             metric.add_metric([name], {'success': status})
+            # job_status = job['status']
+        return metric
+
+    def get_schedule_status_metrics(self, result):
+        metric = StateSetMetricFamily(
+            'dkron_job_schedule_status',
+            'Dkron job schedule status',
+            labels=["jobname"])
+
+        for job in result:
+            name = job['name']
+            # If there's a null result, we want to export a zero.
+            next_date_str = job.get('next') or '2020-01-01T00:00:00.000Z'
+            next_date = dateutil.parser.parse(next_date_str)
+            diff_date = next_date - datetime.datetime.now(datetime.timezone.utc)
+            if diff_date > datetime.timedelta(minutes=1):
+                metric.add_metric([name], {'success': False})
+            else:
+                metric.add_metric([name], {'success': True})
             # job_status = job['status']
         return metric
 

@@ -1,0 +1,13 @@
+# /etc/systemd/system/prom_exporter.service
+[Unit]
+Description=Dkron Prometheus Exporter
+
+[Service]
+PIDFile=/tmp/prom_exporter.pid
+WorkingDirectory=/home/mis-service/dkron-prometheus-exporter
+ExecStart=venv/bin/python app.py --port '4567' --host 'https://jobs.moveinsync.com' --basic_auth_user 'mis-user' --basic_auth_pass 'MisUser@321'
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
