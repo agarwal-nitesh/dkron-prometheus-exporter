@@ -68,7 +68,7 @@ class DkronMetricsController(object):
             next_date_str = job.get('next') or '2020-01-01T00:00:00.000Z'
             next_date = dateutil.parser.parse(next_date_str)
             diff_date = next_date - datetime.datetime.now(datetime.timezone.utc)
-            if diff_date > datetime.timedelta(minutes=1):
+            if diff_date < datetime.timedelta(minutes=-1):
                 metric.add_metric([name], {'success': False})
             else:
                 metric.add_metric([name], {'success': True})
